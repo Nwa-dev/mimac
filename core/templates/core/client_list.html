@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block page_title %}Clients{% endblock %}
+{% block mobile_page_title %}Clients{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-heading font-bold text-white">Clients</h1>
+    <a href="{% url 'core:client_create' %}"
+       class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg shadow-brand-500/30 active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      <span class="hidden sm:inline">New Client</span>
+    </a>
+  </div>
+
+  <!-- Search -->
+  <form method="get" class="relative">
+    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
+         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+    <input type="text" name="q" value="{{ query }}"
+           placeholder="Search by name, company or email…"
+           class="w-full bg-surface-800 border border-surface-700 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500">
+  </form>
+
+  <!-- Client List -->
+  {% if clients %}
+  <div class="space-y-3">
+    {% for client in clients %}
+    <a href="{% url 'core:client_detail' client.pk %}"
+       class="flex items-center gap-4 bg-surface-800 rounded-2xl border border-surface-700 p-4 hover:border-brand-500/40 transition-all duration-200 active:scale-[0.99]">
+      <!-- Avatar -->
+      <div class="w-11 h-11 rounded-2xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0">
+        <span class="text-base font-heading font-bold text-brand-400">
+          {{ client.name|slice:":1"|upper }}
+        </span>
+      </div>
+      <!-- Info -->
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-white truncate">{{ client }}</p>
+        {% if client.company_name and client.company_name != client.name %}
+        <p class="text-xs text-slate-400 truncate">{{ client.name }}</p>
+        {% endif %}
+        {% if client.email %}
+        <p class="text-xs text-slate-500 truncate mt-0.5">{{ client.email }}</p>
+        {% endif %}
+      </div>
+      <!-- Arrow -->
+      <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 px-5 py-16 text-center">
+    <div class="w-12 h-12 rounded-2xl bg-surface-700 flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+      </svg>
+    </div>
+    {% if query %}
+    <p class="text-sm font-semibold text-white">No clients match "{{ query }}"</p>
+    <a href="{% url 'core:client_list' %}" class="text-xs text-brand-400 hover:text-brand-300 mt-2 inline-block">Clear search</a>
+    {% else %}
+    <p class="text-sm font-semibold text-white">No clients yet</p>
+    <p class="text-xs text-slate-400 mt-1">Add your first client to get started</p>
+    <a href="{% url 'core:client_create' %}"
+       class="inline-flex items-center gap-2 mt-4 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200">
+      Add Client
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

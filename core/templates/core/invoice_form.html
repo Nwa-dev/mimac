@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block mobile_page_title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .item-row { transition: opacity 0.15s ease; }
+  .item-row.deleting { opacity: 0.4; pointer-events: none; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <a href="{% if invoice %}{% url 'core:invoice_detail' invoice.pk %}{% else %}{% url 'core:invoice_list' %}{% endif %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 text-slate-400 hover:text-white transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-xl font-heading font-bold text-white">{{ title }}</h1>
+  </div>
+
+  <form method="post" id="invoice-form" novalidate>
+    {% csrf_token %}
+
+    <!-- Invoice Details Card -->
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-4">
+      <h2 class="text-sm font-heading font-semibold text-white">Invoice Details</h2>
+
+      <!-- Client -->
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">
+          Client <span class="text-red-400">*</span>
+          <a href="{% url 'core:client_create' %}?next={% url 'core:invoice_create' %}"
+             class="ml-2 text-brand-400 hover:text-brand-300 font-medium">+ New Client</a>
+        </label>
+        {% render_field form.client class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+        {% if form.client.errors %}<p class="text-red-400 text-xs mt-1">{{ form.client.errors.0 }}</p>{% endif %}
+      </div>
+
+      <!-- Issue / Due dates -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Issue Date <span class="text-red-400">*</span></label>
+          {% render_field form.issue_date class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+          {% if form.issue_date.errors %}<p class="text-red-400 text-xs mt-1">{{ form.issue_date.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Due Date <span class="text-red-400">*</span></label>
+          {% render_field form.due_date class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+          {% if form.due_date.errors %}<p class="text-red-400 text-xs mt-1">{{ form.due_date.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- Tax Rate -->
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Tax Rate (%)</label>
+        {% render_field form.tax_rate id="id_tax_rate" class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+        {% if form.tax_rate.errors %}<p class="text-red-400 text-xs mt-1">{{ form.tax_rate.errors.0 }}</p>{% endif %}
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Notes</label>
+        {% render_field form.notes class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500 resize-none" rows="3" %}
+        {% if form.notes.errors %}<p class="text-red-400 text-xs mt-1">{{ form.notes.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+
+    <!-- Line Items Card -->
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-surface-700">
+        <h2 class="text-sm font-heading font-semibold text-white">Line Items</h2>
+        <button type="button" id="add-item-btn"
+                class="flex items-center gap-1.5 text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Item
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+
+      {% if formset.non_form_errors %}
+      <div class="px-5 py-3 bg-red-900/20 border-b border-red-800/30">
+        {% for error in formset.non_form_errors %}
+        <p class="text-red-400 text-xs">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Desktop column headers -->
+      <div class="hidden sm:grid sm:grid-cols-[1fr_72px_120px_100px_36px] gap-3 px-5 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-surface-700/50">
+        <span>Description</span>
+        <span class="text-right">Qty</span>
+        <span class="text-right">Unit Price</span>
+        <span class="text-right">Total</span>
+        <span></span>
+      </div>
+
+      <!-- Formset rows -->
+      <div id="formset-container" class="divide-y divide-surface-700/50">
+        {% for item_form in formset %}
+        <div class="item-row px-5 py-4{% if item_form.instance.pk and item_form.initial.DELETE %}hidden{% endif %}"
+             data-existing="{% if item_form.instance.pk %}true{% else %}false{% endif %}">
+          {{ item_form.id }}
+          <div style="display:none">{{ item_form.DELETE }}</div>
+
+          <div class="flex flex-col sm:grid sm:grid-cols-[1fr_72px_120px_100px_36px] gap-3 sm:items-center">
+            <div>
+              <label class="sm:hidden text-xs text-slate-500 mb-1 block">Description</label>
+              {% render_field item_form.description class="w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+              {% if item_form.description.errors %}<p class="text-red-400 text-xs mt-1">{{ item_form.description.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="sm:hidden text-xs text-slate-500 mb-1 block">Qty</label>
+              {% render_field item_form.quantity class="item-qty w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+            </div>
+            <div>
+              <label class="sm:hidden text-xs text-slate-500 mb-1 block">Unit Price (₦)</label>
+              {% render_field item_form.unit_price class="item-price w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %}
+            </div>
+            <div class="text-right">
+              <label class="sm:hidden text-xs text-slate-500 mb-1 block">Total</label>
+              <span class="line-total text-sm font-semibold text-white">₦0.00</span>
+            </div>
+            <div class="flex sm:justify-center">
+              <button type="button" class="remove-item-btn p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          {{ item_form.order }}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Totals -->
+      <div class="border-t border-surface-700 px-5 py-4 space-y-2.5 bg-surface-900/30">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Subtotal</span>
+          <span id="subtotal-display" class="font-semibold text-white">₦0.00</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-400">Tax (<span id="tax-rate-label">0</span>%)</span>
+          <span id="tax-display" class="font-semibold text-white">₦0.00</span>
+        </div>
+        <div class="flex justify-between text-base font-heading font-bold text-white pt-2 border-t border-surface-700">
+          <span>Total</span>
+          <span id="total-display" class="text-brand-400">₦0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pb-4">
+      <a href="{% if invoice %}{% url 'core:invoice_detail' invoice.pk %}{% else %}{% url 'core:invoice_list' %}{% endif %}"
+         class="flex-1 text-center py-3 rounded-xl text-sm font-semibold text-slate-300 bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+        Cancel
+      </a>
+      <button type="submit"
+              class="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/25 active:scale-95">
+        {{ title }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Empty form template for JS row cloning -->
+  <div id="empty-form-template" style="display:none">
+    <div class="item-row px-5 py-4" data-existing="false">
+      <input type="hidden" name="form-__prefix__-id" id="id_form-__prefix__-id">
+      <div style="display:none">
+        <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE">
+      </div>
+      <div class="flex flex-col sm:grid sm:grid-cols-[1fr_72px_120px_100px_36px] gap-3 sm:items-center">
+        <div>
+          <label class="sm:hidden text-xs text-slate-500 mb-1 block">Description</label>
+          <input type="text" name="form-__prefix__-description" id="id_form-__prefix__-description"
+                 placeholder="Service or product description"
+                 class="w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500">
+        </div>
+        <div>
+          <label class="sm:hidden text-xs text-slate-500 mb-1 block">Qty</label>
+          <input type="number" name="form-__prefix__-quantity" id="id_form-__prefix__-quantity"
+                 value="1" step="0.01" min="0.01"
+                 class="item-qty w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+        </div>
+        <div>
+          <label class="sm:hidden text-xs text-slate-500 mb-1 block">Unit Price (₦)</label>
+          <input type="number" name="form-__prefix__-unit_price" id="id_form-__prefix__-unit_price"
+                 value="0.00" step="0.01" min="0"
+                 class="item-price w-full bg-surface-900 border border-surface-600 text-white rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+        </div>
+        <div class="text-right">
+          <label class="sm:hidden text-xs text-slate-500 mb-1 block">Total</label>
+          <span class="line-total text-sm font-semibold text-white">₦0.00</span>
+        </div>
+        <div class="flex sm:justify-center">
+          <button type="button" class="remove-item-btn p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-900/20 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <input type="hidden" name="form-__prefix__-order" id="id_form-__prefix__-order" value="0">
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const mgmt = document.querySelector('[name="form-TOTAL_FORMS"]');
+  let total = parseInt(mgmt.value);
+
+  function fmt(n) {
+    return '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function rowTotal(row) {
+    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+    const t = qty * price;
+    const span = row.querySelector('.line-total');
+    if (span) span.textContent = fmt(t);
+    return t;
+  }
+
+  function recalc() {
+    let subtotal = 0;
+    document.querySelectorAll('#formset-container .item-row').forEach(r => {
+      if (!r.classList.contains('hidden') && r.style.display !== 'none') {
+        subtotal += rowTotal(r);
+      }
+    });
+    const rate = parseFloat(document.getElementById('id_tax_rate')?.value) || 0;
+    const tax  = subtotal * rate / 100;
+    document.getElementById('subtotal-display').textContent = fmt(subtotal);
+    document.getElementById('tax-display').textContent      = fmt(tax);
+    document.getElementById('total-display').textContent    = fmt(subtotal + tax);
+    document.getElementById('tax-rate-label').textContent   = rate;
+  }
+
+  function wireRow(row) {
+    row.querySelectorAll('.item-qty, .item-price').forEach(inp => {
+      inp.addEventListener('input', recalc);
+    });
+    row.querySelector('.remove-item-btn')?.addEventListener('click', () => {
+      const del = row.querySelector('[name$="-DELETE"]');
+      if (del) del.checked = true;
+      row.classList.add('hidden');
+      recalc();
+    });
+  }
+
+  function addRow() {
+    const tpl = document.getElementById('empty-form-template').children[0];
+    const newRow = tpl.cloneNode(true);
+    newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, total);
+    newRow.style.display = '';
+    newRow.classList.remove('hidden');
+    document.getElementById('formset-container').appendChild(newRow);
+    total++;
+    mgmt.value = total;
+    wireRow(newRow);
+    recalc();
+    newRow.querySelector('input[type="text"]')?.focus();
+  }
+
+  document.getElementById('add-item-btn').addEventListener('click', addRow);
+  document.getElementById('id_tax_rate')?.addEventListener('input', recalc);
+
+  document.querySelectorAll('#formset-container .item-row').forEach(wireRow);
+  recalc();
+})();
+</script>
+{% endblock %}

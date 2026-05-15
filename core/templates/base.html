@@ -92,8 +92,8 @@
         Dashboard
       </a>
 
-      <a href="#"
-         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200">
+      <a href="{% url 'core:invoice_list' %}"
+         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if 'invoice' in request.resolver_match.url_name %}active bg-surface-700 text-white{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
@@ -101,8 +101,8 @@
         Invoices
       </a>
 
-      <a href="#"
-         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200">
+      <a href="{% url 'core:client_list' %}"
+         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if 'client' in request.resolver_match.url_name %}active bg-surface-700 text-white{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
@@ -189,8 +189,8 @@
         <span class="text-xs text-slate-400 font-medium">Home</span>
       </a>
 
-      <a href="#"
-         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200">
+      <a href="{% url 'core:invoice_list' %}"
+         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
@@ -199,7 +199,7 @@
       </a>
 
       <!-- Center FAB — New Invoice -->
-      <a href="#"
+      <a href="{% url 'core:invoice_create' %}"
          class="flex flex-col items-center gap-1 -mt-5">
         <div class="w-14 h-14 rounded-2xl bg-brand-500 shadow-lg shadow-brand-500/40 flex items-center justify-center hover:bg-brand-600 active:scale-95 transition-all duration-200">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,8 +209,8 @@
         <span class="text-xs text-slate-400 font-medium mt-1">New</span>
       </a>
 
-      <a href="#"
-         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200">
+      <a href="{% url 'core:client_list' %}"
+         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% if 'client' in request.resolver_match.url_name %}active{% endif %}">
         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>

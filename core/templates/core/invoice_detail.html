@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ invoice.invoice_number }}{% endblock %}
+{% block mobile_page_title %}{{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <a href="{% url 'core:invoice_list' %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 text-slate-400 hover:text-white transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-xl font-heading font-bold text-white truncate">{{ invoice.invoice_number }}</h1>
+    </div>
+    <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold {{ invoice.status_color }}">
+      {{ invoice.get_status_display }}
+    </span>
+  </div>
+
+  <!-- Invoice Meta Card -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-4">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Billed To</p>
+        <p class="text-base font-heading font-bold text-white mt-1">{{ invoice.client }}</p>
+        {% if invoice.client.email %}
+        <p class="text-xs text-slate-400 mt-0.5">{{ invoice.client.email }}</p>
+        {% endif %}
+        {% if invoice.client.phone %}
+        <p class="text-xs text-slate-400">{{ invoice.client.phone }}</p>
+        {% endif %}
+        {% if invoice.client.full_address %}
+        <p class="text-xs text-slate-400 mt-0.5">{{ invoice.client.full_address }}</p>
+        {% endif %}
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Amount Due</p>
+        <p class="text-2xl font-heading font-bold text-white mt-1">₦{{ invoice.total_amount|floatformat:2 }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 pt-3 border-t border-surface-700">
+      <div>
+        <p class="text-xs text-slate-500 font-medium">Issue Date</p>
+        <p class="text-sm text-white mt-0.5">{{ invoice.issue_date }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-medium">Due Date</p>
+        <p class="text-sm mt-0.5 {% if invoice.is_overdue %}text-red-400 font-semibold{% else %}text-white{% endif %}">
+          {{ invoice.due_date }}{% if invoice.is_overdue %} · Overdue{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 overflow-hidden">
+    <div class="px-5 py-4 border-b border-surface-700">
+      <h2 class="text-sm font-heading font-semibold text-white">Line Items</h2>
+    </div>
+
+    <div class="divide-y divide-surface-700/50">
+      {% for item in invoice.items.all %}
+      <div class="px-5 py-3.5 flex items-center justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-white">{{ item.description }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">{{ item.quantity }} × ₦{{ item.unit_price|floatformat:2 }}</p>
+        </div>
+        <p class="text-sm font-semibold text-white whitespace-nowrap">₦{{ item.line_total|floatformat:2 }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Totals -->
+    <div class="border-t border-surface-700 px-5 py-4 space-y-2.5 bg-surface-900/30">
+      <div class="flex justify-between text-sm">
+        <span class="text-slate-400">Subtotal</span>
+        <span class="text-white font-medium">₦{{ invoice.subtotal|floatformat:2 }}</span>
+      </div>
+      {% if invoice.tax_rate %}
+      <div class="flex justify-between text-sm">
+        <span class="text-slate-400">Tax ({{ invoice.tax_rate }}%)</span>
+        <span class="text-white font-medium">₦{{ invoice.tax_amount|floatformat:2 }}</span>
+      </div>
+      {% endif %}
+      <div class="flex justify-between text-base font-heading font-bold text-white pt-2 border-t border-surface-700">
+        <span>Total</span>
+        <span class="text-brand-400">₦{{ invoice.total_amount|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Info (if paid) -->
+  {% if invoice.is_paid %}
+  <div class="bg-emerald-900/20 border border-emerald-800/40 rounded-2xl p-5 space-y-3">
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+      <h2 class="text-sm font-heading font-semibold text-brand-400">Payment Received</h2>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div>
+        <p class="text-xs text-slate-500">Paid On</p>
+        <p class="text-white mt-0.5">{{ invoice.paid_at|date:"d M Y, H:i" }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500">Method</p>
+        <p class="text-white mt-0.5">{{ invoice.payment_method_display_label }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500">Amount Received</p>
+        <p class="text-white mt-0.5">₦{{ invoice.amount_received|floatformat:2 }}</p>
+      </div>
+      {% if invoice.payment_reference %}
+      <div>
+        <p class="text-xs text-slate-500">Reference</p>
+        <p class="text-white mt-0.5 truncate">{{ invoice.payment_reference }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="pt-2 border-t border-emerald-800/40">
+      <p class="text-xs text-slate-400">Receipt No: <span class="text-white font-medium">{{ invoice.receipt_number }}</span></p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notes -->
+  {% if invoice.notes %}
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5">
+    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Notes</p>
+    <p class="text-sm text-slate-300 leading-relaxed">{{ invoice.notes }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Actions -->
+  {% if not invoice.is_paid %}
+  <div class="flex gap-3 pb-4">
+    <a href="{% url 'core:invoice_edit' invoice.pk %}"
+       class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      Edit
+    </a>
+    <a href="{% url 'core:invoice_delete' invoice.pk %}"
+       class="px-4 py-3 rounded-xl text-sm font-semibold text-red-400 bg-red-900/20 border border-red-800/30 hover:bg-red-900/40 transition-colors active:scale-95">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+    </a>
+  </div>
+  {% else %}
+  <div class="pb-4">
+    <a href="{% url 'core:invoice_list' %}"
+       class="w-full flex items-center justify-center py-3 rounded-xl text-sm font-semibold text-slate-300 bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+      ← Back to Invoices
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

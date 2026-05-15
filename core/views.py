@@ -1,5 +1,222 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db.models import Sum, Count, Q
+from django.utils import timezone
+from decimal import Decimal
+from .models import Invoice, Client, BusinessProfile
+from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm
+import datetime
 
 
 def dashboard(request):
-    return render(request, 'core/dashboard.html')
+    Invoice.objects.filter(
+        status__in=['sent', 'draft'],
+        due_date__lt=timezone.now().date()
+    ).update(status='overdue')
+
+    total_invoiced = Invoice.objects.exclude(
+        status='cancelled'
+    ).aggregate(t=Sum('total_amount'))['t'] or Decimal('0')
+
+    total_paid = Invoice.objects.filter(
+        status='paid'
+    ).aggregate(t=Sum('total_amount'))['t'] or Decimal('0')
+
+    total_outstanding = Invoice.objects.filter(
+        status__in=['sent', 'overdue']
+    ).aggregate(t=Sum('total_amount'))['t'] or Decimal('0')
+
+    invoice_counts = Invoice.objects.aggregate(
+        draft=Count('id', filter=Q(status='draft')),
+        sent=Count('id', filter=Q(status='sent')),
+        paid=Count('id', filter=Q(status='paid')),
+        overdue=Count('id', filter=Q(status='overdue')),
+    )
+
+    recent_invoices = Invoice.objects.select_related('client').order_by('-created_at')[:10]
+
+    context = {
+        'total_invoiced':    total_invoiced,
+        'total_paid':        total_paid,
+        'total_outstanding': total_outstanding,
+        'invoice_counts':    invoice_counts,
+        'recent_invoices':   recent_invoices,
+        'client_count':      Client.objects.count(),
+    }
+    return render(request, 'core/dashboard.html', context)
+
+
+def invoice_list(request):
+    status_filter = request.GET.get('status', 'all')
+
+    Invoice.objects.filter(
+        status__in=['sent', 'draft'],
+        due_date__lt=timezone.now().date()
+    ).update(status='overdue')
+
+    invoices = Invoice.objects.select_related('client').order_by('-created_at')
+
+    if status_filter != 'all':
+        invoices = invoices.filter(status=status_filter)
+
+    counts = Invoice.objects.aggregate(
+        all=Count('id'),
+        draft=Count('id', filter=Q(status='draft')),
+        sent=Count('id', filter=Q(status='sent')),
+        paid=Count('id', filter=Q(status='paid')),
+        overdue=Count('id', filter=Q(status='overdue')),
+    )
+
+    filter_tabs = [
+        ('all',     'All',     counts['all']),
+        ('draft',   'Draft',   counts['draft']),
+        ('sent',    'Sent',    counts['sent']),
+        ('paid',    'Paid',    counts['paid']),
+        ('overdue', 'Overdue', counts['overdue']),
+    ]
+
+    context = {
+        'invoices':      invoices,
+        'status_filter': status_filter,
+        'counts':        counts,
+        'filter_tabs':   filter_tabs,
+    }
+    return render(request, 'core/invoice_list.html', context)
+
+
+def invoice_create(request):
+    if request.method == 'POST':
+        form    = InvoiceForm(request.POST)
+        formset = InvoiceItemFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            invoice = form.save()
+            formset.instance = invoice
+            formset.save()
+            invoice.recalculate_totals()
+            messages.success(request, f"Invoice {invoice.invoice_number} created successfully.")
+            return redirect('core:invoice_detail', pk=invoice.pk)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form    = InvoiceForm(initial={
+            'issue_date': timezone.now().date(),
+            'due_date':   timezone.now().date() + datetime.timedelta(days=14),
+        })
+        formset = InvoiceItemFormSet()
+
+    context = {
+        'form':    form,
+        'formset': formset,
+        'title':   'New Invoice',
+    }
+    return render(request, 'core/invoice_form.html', context)
+
+
+def invoice_detail(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('client').prefetch_related('items'), pk=pk
+    )
+    invoice.check_overdue()
+    return render(request, 'core/invoice_detail.html', {'invoice': invoice})
+
+
+def invoice_edit(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if invoice.status == 'paid':
+        messages.error(request, "A paid invoice cannot be edited.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if request.method == 'POST':
+        form    = InvoiceForm(request.POST, instance=invoice)
+        formset = InvoiceItemFormSet(request.POST, instance=invoice)
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            invoice.recalculate_totals()
+            messages.success(request, f"Invoice {invoice.invoice_number} updated.")
+            return redirect('core:invoice_detail', pk=invoice.pk)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form    = InvoiceForm(instance=invoice)
+        formset = InvoiceItemFormSet(instance=invoice)
+
+    context = {
+        'form':    form,
+        'formset': formset,
+        'invoice': invoice,
+        'title':   f'Edit {invoice.invoice_number}',
+    }
+    return render(request, 'core/invoice_form.html', context)
+
+
+def invoice_delete(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if invoice.status == 'paid':
+        messages.error(request, "A paid invoice cannot be deleted.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if request.method == 'POST':
+        number = invoice.invoice_number
+        invoice.delete()
+        messages.success(request, f"Invoice {number} deleted.")
+        return redirect('core:invoice_list')
+
+    return render(request, 'core/invoice_confirm_delete.html', {'invoice': invoice})
+
+
+def client_list(request):
+    query   = request.GET.get('q', '')
+    clients = Client.objects.order_by('name')
+    if query:
+        clients = clients.filter(
+            Q(name__icontains=query) |
+            Q(company_name__icontains=query) |
+            Q(email__icontains=query)
+        )
+    return render(request, 'core/client_list.html', {'clients': clients, 'query': query})
+
+
+def client_create(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save()
+            messages.success(request, f"Client '{client}' added successfully.")
+            next_url = request.GET.get('next', '')
+            if next_url:
+                return redirect(next_url)
+            return redirect('core:client_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ClientForm()
+
+    return render(request, 'core/client_form.html', {'form': form, 'title': 'New Client'})
+
+
+def client_detail(request, pk):
+    client   = get_object_or_404(Client, pk=pk)
+    invoices = Invoice.objects.filter(client=client).order_by('-created_at')
+    return render(request, 'core/client_detail.html', {'client': client, 'invoices': invoices})
+
+
+def client_edit(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Client '{client}' updated.")
+            return redirect('core:client_detail', pk=client.pk)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ClientForm(instance=client)
+    return render(request, 'core/client_form.html', {
+        'form': form, 'client': client, 'title': f'Edit {client}'
+    })

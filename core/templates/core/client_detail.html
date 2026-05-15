@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ client }}{% endblock %}
+{% block mobile_page_title %}Client{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <a href="{% url 'core:client_list' %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 text-slate-400 hover:text-white transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="flex-1 min-w-0">
+      <h1 class="text-xl font-heading font-bold text-white truncate">{{ client }}</h1>
+      {% if client.company_name and client.company_name != client.name %}
+      <p class="text-xs text-slate-400 mt-0.5">{{ client.name }}</p>
+      {% endif %}
+    </div>
+    <a href="{% url 'core:client_edit' client.pk %}"
+       class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+      Edit
+    </a>
+  </div>
+
+  <!-- Client Info -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-3">
+    {% if client.email %}
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <p class="text-sm text-white">{{ client.email }}</p>
+    </div>
+    {% endif %}
+    {% if client.phone %}
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+      </div>
+      <p class="text-sm text-white">{{ client.phone }}</p>
+    </div>
+    {% endif %}
+    {% if client.full_address %}
+    <div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <p class="text-sm text-white leading-relaxed">{{ client.full_address }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Financial Summary -->
+  <div class="grid grid-cols-3 gap-3">
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-4 text-center">
+      <p class="text-xs text-slate-400 font-medium">Invoiced</p>
+      <p class="text-sm font-heading font-bold text-white mt-1">₦{{ client.total_invoiced|floatformat:0 }}</p>
+    </div>
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-4 text-center">
+      <p class="text-xs text-slate-400 font-medium">Paid</p>
+      <p class="text-sm font-heading font-bold text-brand-400 mt-1">₦{{ client.total_paid|floatformat:0 }}</p>
+    </div>
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-4 text-center">
+      <p class="text-xs text-slate-400 font-medium">Balance</p>
+      <p class="text-sm font-heading font-bold {% if client.outstanding_balance %}text-yellow-400{% else %}text-white{% endif %} mt-1">
+        ₦{{ client.outstanding_balance|floatformat:0 }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Invoices -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-surface-700">
+      <h2 class="text-sm font-heading font-semibold text-white">Invoices</h2>
+      <a href="{% url 'core:invoice_create' %}"
+         class="text-xs text-brand-400 hover:text-brand-300 font-medium">+ New</a>
+    </div>
+
+    {% if invoices %}
+    <div class="divide-y divide-surface-700/50">
+      {% for invoice in invoices %}
+      <a href="{% url 'core:invoice_detail' invoice.pk %}"
+         class="flex items-center justify-between px-5 py-3.5 hover:bg-surface-700/50 transition-colors">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white">{{ invoice.invoice_number }}</p>
+          <p class="text-xs text-slate-400 mt-0.5">Due {{ invoice.due_date }}</p>
+        </div>
+        <div class="flex items-center gap-3 ml-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold {{ invoice.status_color }}">
+            {{ invoice.get_status_display }}
+          </span>
+          <p class="text-sm font-bold text-white whitespace-nowrap">₦{{ invoice.total_amount|floatformat:0 }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-10 text-center">
+      <p class="text-sm text-slate-400">No invoices for this client yet.</p>
+      <a href="{% url 'core:invoice_create' %}"
+         class="inline-flex items-center gap-2 mt-3 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200">
+        Create Invoice
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

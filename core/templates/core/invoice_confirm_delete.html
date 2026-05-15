@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block page_title %}Delete Invoice{% endblock %}
+{% block mobile_page_title %}Delete{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto space-y-5">
+
+  <div class="flex items-center gap-3">
+    <a href="{% url 'core:invoice_detail' invoice.pk %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 text-slate-400 hover:text-white transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-xl font-heading font-bold text-white">Delete Invoice</h1>
+  </div>
+
+  <div class="bg-red-900/20 border border-red-800/40 rounded-2xl p-5 space-y-4">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-900/40 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-white">This action cannot be undone</p>
+        <p class="text-xs text-slate-400 mt-1">
+          You are about to permanently delete invoice <span class="text-white font-medium">{{ invoice.invoice_number }}</span>
+          for <span class="text-white font-medium">{{ invoice.client }}</span>.
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-surface-800/50 rounded-xl p-4 space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-400">Invoice</span>
+        <span class="text-white font-medium">{{ invoice.invoice_number }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-400">Client</span>
+        <span class="text-white">{{ invoice.client }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-400">Total</span>
+        <span class="text-white font-semibold">₦{{ invoice.total_amount|floatformat:2 }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-400">Status</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold {{ invoice.status_color }}">
+          {{ invoice.get_status_display }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="flex gap-3 pb-4">
+    {% csrf_token %}
+    <a href="{% url 'core:invoice_detail' invoice.pk %}"
+       class="flex-1 text-center py-3 rounded-xl text-sm font-semibold text-slate-300 bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+      Cancel
+    </a>
+    <button type="submit"
+            class="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors active:scale-95">
+      Delete Invoice
+    </button>
+  </form>
+
+</div>
+{% endblock %}

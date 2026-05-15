@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block mobile_page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-5">
+
+  <div class="flex items-center gap-3">
+    <a href="{% if client %}{% url 'core:client_detail' client.pk %}{% else %}{% url 'core:client_list' %}{% endif %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 text-slate-400 hover:text-white transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-xl font-heading font-bold text-white">{{ title }}</h1>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Contact Info -->
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-4">
+      <h2 class="text-sm font-heading font-semibold text-white">Contact Information</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Full Name <span class="text-red-400">*</span></label>
+          {% render_field form.name class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+          {% if form.name.errors %}<p class="text-red-400 text-xs mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Company Name</label>
+          {% render_field form.company_name class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+          {% if form.company_name.errors %}<p class="text-red-400 text-xs mt-1">{{ form.company_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+          {% render_field form.email class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+          {% if form.email.errors %}<p class="text-red-400 text-xs mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Phone</label>
+          {% render_field form.phone class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+          {% if form.phone.errors %}<p class="text-red-400 text-xs mt-1">{{ form.phone.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-4">
+      <h2 class="text-sm font-heading font-semibold text-white">Address</h2>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Address Line 1</label>
+        {% render_field form.address_line1 class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Address Line 2</label>
+        {% render_field form.address_line2 class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">City</label>
+          {% render_field form.city class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">State</label>
+          {% render_field form.state class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Country</label>
+        {% render_field form.country class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500" %}
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5">
+      <label class="block text-xs font-medium text-slate-400 mb-1.5">Internal Notes</label>
+      {% render_field form.notes class="w-full bg-surface-700 border border-surface-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder-slate-500 resize-none" rows="3" %}
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pb-4">
+      <a href="{% if client %}{% url 'core:client_detail' client.pk %}{% else %}{% url 'core:client_list' %}{% endif %}"
+         class="flex-1 text-center py-3 rounded-xl text-sm font-semibold text-slate-300 bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+        Cancel
+      </a>
+      <button type="submit"
+              class="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/25 active:scale-95">
+        {{ title }}
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
