@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from decimal import Decimal
 from .models import Invoice, Client, BusinessProfile
-from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm, MarkAsPaidForm
+from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm, MarkAsPaidForm, BusinessProfileForm
 from .utils.pdf import generate_pdf
 import datetime
 
@@ -169,6 +169,29 @@ def invoice_delete(request, pk):
         return redirect('core:invoice_list')
 
     return render(request, 'core/invoice_confirm_delete.html', {'invoice': invoice})
+
+
+def settings_view(request):
+    profile = BusinessProfile.objects.first()
+
+    if request.method == 'POST':
+        form = BusinessProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            if request.POST.get('clear_logo') and profile and profile.logo:
+                profile.logo.delete(save=False)
+                instance = form.save(commit=False)
+                instance.logo = None
+                instance.save()
+            else:
+                form.save()
+            messages.success(request, "Business profile updated successfully.")
+            return redirect('core:settings')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = BusinessProfileForm(instance=profile)
+
+    return render(request, 'core/settings.html', {'form': form, 'profile': profile})
 
 
 def mark_as_paid(request, pk):

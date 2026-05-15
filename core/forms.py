@@ -89,6 +89,39 @@ class InvoiceItemForm(forms.ModelForm):
         }
 
 
+class BusinessProfileForm(forms.ModelForm):
+    class Meta:
+        model  = BusinessProfile
+        fields = [
+            'name', 'tagline', 'logo',
+            'address_line1', 'address_line2', 'city', 'state', 'country', 'postal_code',
+            'phone', 'email', 'website',
+            'tax_id',
+            'bank_name', 'account_name', 'account_number',
+            'invoice_footer_note', 'receipt_footer_note',
+        ]
+        widgets = {
+            'name':                forms.TextInput(attrs={'placeholder': 'Your Business Name Ltd.'}),
+            'tagline':             forms.TextInput(attrs={'placeholder': 'Your business tagline (optional)'}),
+            'logo':                forms.FileInput(attrs={'accept': 'image/png,image/jpeg,image/webp'}),
+            'address_line1':       forms.TextInput(attrs={'placeholder': 'Street address'}),
+            'address_line2':       forms.TextInput(attrs={'placeholder': 'Apartment, suite, floor (optional)'}),
+            'city':                forms.TextInput(attrs={'placeholder': 'City'}),
+            'state':               forms.TextInput(attrs={'placeholder': 'State / Province'}),
+            'country':             forms.TextInput(attrs={'placeholder': 'Country'}),
+            'postal_code':         forms.TextInput(attrs={'placeholder': 'Postal / ZIP code'}),
+            'phone':               forms.TextInput(attrs={'placeholder': '+234 800 000 0000'}),
+            'email':               forms.EmailInput(attrs={'placeholder': 'business@example.com'}),
+            'website':             forms.URLInput(attrs={'placeholder': 'https://yourwebsite.com'}),
+            'tax_id':              forms.TextInput(attrs={'placeholder': 'RC number, TIN, or VAT ID'}),
+            'bank_name':           forms.TextInput(attrs={'placeholder': 'First Bank Nigeria'}),
+            'account_name':        forms.TextInput(attrs={'placeholder': 'Your Business Name'}),
+            'account_number':      forms.TextInput(attrs={'placeholder': '0123456789'}),
+            'invoice_footer_note': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Thank you for your business.'}),
+            'receipt_footer_note': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Payment received. Thank you.'}),
+        }
+
+
 InvoiceItemFormSet = inlineformset_factory(
     Invoice,
     InvoiceItem,
