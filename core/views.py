@@ -7,6 +7,8 @@ from decimal import Decimal
 from .models import Invoice, Client, BusinessProfile
 from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm, MarkAsPaidForm, BusinessProfileForm
 from .utils.pdf import generate_pdf
+from .utils.email_utils import send_invoice_email, send_receipt_email
+from django.views.decorators.http import require_POST
 import datetime
 
 
@@ -171,6 +173,58 @@ def invoice_delete(request, pk):
     return render(request, 'core/invoice_confirm_delete.html', {'invoice': invoice})
 
 
+@require_POST
+def send_invoice(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if invoice.status == 'paid':
+        messages.warning(request, "This invoice is already paid. Send the receipt instead.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if not invoice.client.email:
+        messages.error(
+            request,
+            f"Client '{invoice.client}' has no email address. Add one via the client edit page."
+        )
+        return redirect('core:invoice_detail', pk=pk)
+
+    success = send_invoice_email(invoice, request)
+
+    if success:
+        messages.success(
+            request,
+            f"Invoice {invoice.invoice_number} sent to {invoice.client.email}."
+        )
+    else:
+        messages.error(request, "Failed to send email. Check your email settings or try again.")
+
+    return redirect('core:invoice_detail', pk=pk)
+
+
+@require_POST
+def send_receipt(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk, status='paid')
+
+    if not invoice.client.email:
+        messages.error(
+            request,
+            f"Client '{invoice.client}' has no email address. Add one to send the receipt."
+        )
+        return redirect('core:receipt_detail', pk=pk)
+
+    success = send_receipt_email(invoice)
+
+    if success:
+        messages.success(
+            request,
+            f"Receipt {invoice.receipt_number} sent to {invoice.client.email}."
+        )
+    else:
+        messages.error(request, "Failed to send email. Check your email settings or try again.")
+
+    return redirect('core:receipt_detail', pk=pk)
+
+
 def settings_view(request):
     profile = BusinessProfile.objects.first()
 
@@ -216,10 +270,20 @@ def mark_as_paid(request, pk):
             paid_at = form.cleaned_data.get('paid_at')
             if paid_at:
                 Invoice.objects.filter(pk=invoice.pk).update(paid_at=paid_at)
-            messages.success(
-                request,
-                f"Payment recorded for {invoice.invoice_number}. Receipt is ready."
-            )
+            if invoice.client.email:
+                sent = send_receipt_email(invoice)
+                if sent:
+                    messages.success(
+                        request,
+                        f"Payment recorded. Receipt emailed to {invoice.client.email}."
+                    )
+                else:
+                    messages.success(
+                        request,
+                        "Payment recorded. Receipt is ready (email could not be sent — check settings)."
+                    )
+            else:
+                messages.success(request, "Payment recorded. Receipt is ready.")
             return redirect('core:receipt_detail', pk=invoice.pk)
         else:
             messages.error(request, "Please correct the errors below.")

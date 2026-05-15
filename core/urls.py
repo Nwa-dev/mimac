@@ -18,6 +18,9 @@ urlpatterns = [
     path('invoices/<int:pk>/pdf/',         views.invoice_pdf,      name='invoice_pdf'),
     path('invoices/<int:pk>/receipt/pdf/', views.receipt_pdf,      name='receipt_pdf'),
 
+    path('invoices/<int:pk>/send/',         views.send_invoice, name='send_invoice'),
+    path('invoices/<int:pk>/send-receipt/', views.send_receipt, name='send_receipt'),
+
     path('settings/',                    views.settings_view,  name='settings'),
 
     path('clients/',                    views.client_list,    name='client_list'),

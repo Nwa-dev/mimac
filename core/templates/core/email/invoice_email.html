@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice {{ invoice.invoice_number }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .wrapper {
+      max-width: 580px;
+      margin: 32px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .header {
+      background: #0f172a;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-brand { color: #ffffff; font-size: 18px; font-weight: 800; }
+    .header-badge {
+      background: #10b981;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .body { padding: 32px; }
+    .greeting { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    .message { color: #475569; margin-bottom: 28px; }
+    .invoice-summary {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: #64748b; }
+    .summary-value { font-weight: 600; color: #0f172a; }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .total-amount { color: #10b981; }
+    .bank-block {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+    .bank-title { font-size: 11px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .bank-detail { font-size: 13px; color: #166534; margin-bottom: 3px; }
+    .bank-value { font-weight: 700; }
+    .note { font-size: 13px; color: #64748b; font-style: italic; margin-bottom: 28px; }
+    .footer {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 20px 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-brand">
+      {% if business %}{{ business.name }}{% else %}Invoice System{% endif %}
+    </div>
+    <div class="header-badge">Invoice</div>
+  </div>
+
+  <div class="body">
+    <div class="greeting">Hello {{ invoice.client.name }},</div>
+    <div class="message">
+      Please find attached your invoice from
+      <strong>{% if business %}{{ business.name }}{% else %}us{% endif %}</strong>.
+      Payment is due by <strong>{{ invoice.due_date }}</strong>.
+    </div>
+
+    <div class="invoice-summary">
+      <div class="summary-row">
+        <span class="summary-label">Invoice Number</span>
+        <span class="summary-value">{{ invoice.invoice_number }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Issue Date</span>
+        <span class="summary-value">{{ invoice.issue_date }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Due Date</span>
+        <span class="summary-value">{{ invoice.due_date }}</span>
+      </div>
+      {% if invoice.tax_rate > 0 %}
+      <div class="summary-row">
+        <span class="summary-label">Subtotal</span>
+        <span class="summary-value">&#8358;{{ invoice.subtotal|floatformat:2 }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Tax ({{ invoice.tax_rate }}%)</span>
+        <span class="summary-value">&#8358;{{ invoice.tax_amount|floatformat:2 }}</span>
+      </div>
+      {% endif %}
+      <div class="total-row">
+        <span>Total Due</span>
+        <span class="total-amount">&#8358;{{ invoice.total_amount|floatformat:2 }}</span>
+      </div>
+    </div>
+
+    {% if business and business.bank_name %}
+    <div class="bank-block">
+      <div class="bank-title">Payment Information</div>
+      <div class="bank-detail">Bank: <span class="bank-value">{{ business.bank_name }}</span></div>
+      <div class="bank-detail">Account Name: <span class="bank-value">{{ business.account_name }}</span></div>
+      <div class="bank-detail">Account Number: <span class="bank-value">{{ business.account_number }}</span></div>
+    </div>
+    {% endif %}
+
+    {% if invoice.notes %}
+    <div class="note">Note: {{ invoice.notes }}</div>
+    {% endif %}
+
+    <div style="color: #475569; font-size: 13px;">
+      The full invoice is attached to this email as a PDF.
+      {% if business and business.invoice_footer_note %}
+      <br><br>{{ business.invoice_footer_note }}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="footer">
+    {% if business %}
+    {{ business.name }}{% if business.phone %} &middot; {{ business.phone }}{% endif %}{% if business.email %} &middot; {{ business.email }}{% endif %}
+    <br>
+    {% endif %}
+    This is an automated email. Please do not reply directly to this address.
+  </div>
+
+</div>
+</body>
+</html>

@@ -115,6 +115,19 @@
        class="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-surface-700 hover:bg-surface-600 text-slate-300 text-sm font-semibold transition-colors">
       Back to Invoices
     </a>
+    {% if invoice.client.email %}
+    <form method="post" action="{% url 'core:send_receipt' invoice.pk %}">
+      {% csrf_token %}
+      <button type="submit"
+              class="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-surface-700 hover:bg-surface-600 text-slate-300 text-sm font-semibold transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        Resend Receipt Email
+      </button>
+    </form>
+    {% endif %}
   </div>
 
 </div>
