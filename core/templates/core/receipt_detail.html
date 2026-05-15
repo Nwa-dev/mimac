@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ invoice.receipt_number }}{% endblock %}
+{% block mobile_page_title %}{{ invoice.receipt_number }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+  <!-- Success Hero -->
+  <div class="text-center py-8 px-4">
+    <div class="w-20 h-20 rounded-full bg-brand-500/20 border-2 border-brand-500 flex items-center justify-center mx-auto mb-5">
+      <svg class="w-10 h-10 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h1 class="text-2xl font-heading font-extrabold text-white">Payment Received!</h1>
+    <p class="text-slate-400 text-sm mt-2">{{ invoice.receipt_number }} · {{ invoice.paid_at|date:"d M Y, H:i" }}</p>
+  </div>
+
+  <!-- Amount -->
+  <div class="bg-brand-500/10 border border-brand-500/30 rounded-2xl p-5 text-center">
+    <p class="text-xs text-brand-400 uppercase tracking-wider font-bold mb-1">Amount Paid</p>
+    <p class="text-4xl font-heading font-extrabold text-white">₦{{ invoice.amount_received|floatformat:2 }}</p>
+  </div>
+
+  <!-- Payment Summary Card -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-4">
+    <h2 class="text-sm font-heading font-semibold text-white border-b border-surface-700 pb-3">Payment Summary</h2>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Method</p>
+        <p class="text-white font-semibold mt-1">{{ invoice.payment_method_display_label }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Date</p>
+        <p class="text-white font-semibold mt-1">{{ invoice.paid_at|date:"d M Y" }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Receipt No.</p>
+        <p class="text-brand-400 font-semibold mt-1">{{ invoice.receipt_number }}</p>
+      </div>
+      {% if invoice.payment_reference %}
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-wider font-medium">Reference</p>
+        <p class="text-white font-semibold mt-1 truncate">{{ invoice.payment_reference }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Client & Invoice Info -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-3">
+    <h2 class="text-sm font-heading font-semibold text-white border-b border-surface-700 pb-3">Invoice Details</h2>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-xs text-slate-500 font-medium">Client</p>
+        <p class="text-white font-semibold mt-1">{{ invoice.client }}</p>
+        {% if invoice.client.email %}
+        <p class="text-xs text-slate-400">{{ invoice.client.email }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <p class="text-xs text-slate-500 font-medium">Invoice</p>
+        <p class="text-white font-semibold mt-1">{{ invoice.invoice_number }}</p>
+        <p class="text-xs text-slate-400">Issued {{ invoice.issue_date }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 overflow-hidden">
+    <div class="px-5 py-4 border-b border-surface-700">
+      <h2 class="text-sm font-heading font-semibold text-white">Line Items</h2>
+    </div>
+    <div class="divide-y divide-surface-700/50">
+      {% for item in invoice.items.all %}
+      <div class="px-5 py-3.5 flex items-center justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-white">{{ item.description }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">{{ item.quantity }} × ₦{{ item.unit_price|floatformat:2 }}</p>
+        </div>
+        <p class="text-sm font-semibold text-white whitespace-nowrap">₦{{ item.line_total|floatformat:2 }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="border-t border-surface-700 px-5 py-4 space-y-2.5 bg-surface-900/30">
+      <div class="flex justify-between text-sm">
+        <span class="text-slate-400">Subtotal</span>
+        <span class="text-white font-medium">₦{{ invoice.subtotal|floatformat:2 }}</span>
+      </div>
+      {% if invoice.tax_rate %}
+      <div class="flex justify-between text-sm">
+        <span class="text-slate-400">Tax ({{ invoice.tax_rate }}%)</span>
+        <span class="text-white font-medium">₦{{ invoice.tax_amount|floatformat:2 }}</span>
+      </div>
+      {% endif %}
+      <div class="flex justify-between text-base font-heading font-bold text-white pt-2 border-t border-surface-700">
+        <span>Total</span>
+        <span class="text-brand-400">₦{{ invoice.total_amount|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTAs -->
+  <div class="space-y-3 pb-6">
+    <a href="{% url 'core:receipt_pdf' invoice.pk %}"
+       target="_blank"
+       class="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-heading font-bold shadow-xl shadow-brand-500/40 transition-all active:scale-[0.98]">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
+      </svg>
+      Download Receipt PDF
+    </a>
+    <a href="{% url 'core:invoice_list' %}"
+       class="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-surface-700 hover:bg-surface-600 text-slate-300 text-sm font-semibold transition-colors">
+      Back to Invoices
+    </a>
+  </div>
+
+</div>
+{% endblock %}

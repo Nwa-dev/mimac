@@ -1,6 +1,45 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.utils import timezone
 from .models import Invoice, InvoiceItem, Client, BusinessProfile
+
+
+class MarkAsPaidForm(forms.Form):
+    payment_method = forms.ChoiceField(
+        choices=Invoice.PAYMENT_METHOD_CHOICES,
+        widget=forms.Select()
+    )
+    amount_received = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'placeholder': '0.00',
+        })
+    )
+    paid_at = forms.DateTimeField(
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(
+            attrs={'type': 'datetime-local'},
+            format='%Y-%m-%dT%H:%M'
+        )
+    )
+    payment_reference = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Transaction ID, cheque no., etc. (optional)'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        invoice_total = kwargs.pop('invoice_total', None)
+        super().__init__(*args, **kwargs)
+        now = timezone.localtime(timezone.now())
+        self.fields['paid_at'].initial = now.strftime('%Y-%m-%dT%H:%M')
+        if invoice_total is not None:
+            self.fields['amount_received'].initial = invoice_total
 
 
 class ClientForm(forms.ModelForm):

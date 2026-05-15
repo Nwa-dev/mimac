@@ -138,57 +138,127 @@
   {% endif %}
 
   <!-- Actions -->
-  {% if not invoice.is_paid %}
-  <div class="flex flex-wrap gap-3 pb-4">
-    <a href="{% url 'core:invoice_pdf' invoice.pk %}"
-       target="_blank"
-       class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
+  {% if invoice.status == 'draft' %}
+  <div class="space-y-3 pb-4">
+    <form method="post" action="{% url 'core:mark_as_sent' invoice.pk %}">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-heading font-bold shadow-lg transition-all active:scale-[0.98]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+        Mark as Sent
+      </button>
+    </form>
+    <div class="flex gap-3">
+      <a href="{% url 'core:invoice_pdf' invoice.pk %}" target="_blank"
+         class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
+        </svg>
+        View PDF
+      </a>
+      <a href="{% url 'core:invoice_edit' invoice.pk %}"
+         class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
+      </a>
+      <a href="{% url 'core:invoice_delete' invoice.pk %}"
+         class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 bg-red-900/20 border border-red-800/30 hover:bg-red-900/40 transition-colors active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  {% elif invoice.status == 'sent' %}
+  <div class="space-y-3 pb-4">
+    <a href="{% url 'core:mark_as_paid' invoice.pk %}"
+       class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-heading font-bold shadow-xl shadow-brand-500/40 transition-all active:scale-[0.98]">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+      Mark as Paid
+    </a>
+    <div class="flex gap-3">
+      <a href="{% url 'core:invoice_pdf' invoice.pk %}" target="_blank"
+         class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
+        </svg>
+        View PDF
+      </a>
+      <a href="{% url 'core:invoice_edit' invoice.pk %}"
+         class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Edit
+      </a>
+    </div>
+  </div>
+
+  {% elif invoice.status == 'overdue' %}
+  <div class="space-y-3 pb-4">
+    <a href="{% url 'core:mark_as_paid' invoice.pk %}"
+       class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-sm font-heading font-bold shadow-xl shadow-red-600/30 transition-all active:scale-[0.98]">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+      Record Payment — Overdue
+    </a>
+    <a href="{% url 'core:invoice_pdf' invoice.pk %}" target="_blank"
+       class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
       </svg>
-      View PDF
-    </a>
-    <a href="{% url 'core:invoice_pdf' invoice.pk %}?download=attachment"
-       class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-      </svg>
-      Download
-    </a>
-    <a href="{% url 'core:invoice_edit' invoice.pk %}"
-       class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors active:scale-95">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-      </svg>
-      Edit
-    </a>
-    <a href="{% url 'core:invoice_delete' invoice.pk %}"
-       class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 bg-red-900/20 border border-red-800/30 hover:bg-red-900/40 transition-colors active:scale-95">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-      </svg>
+      View Invoice PDF
     </a>
   </div>
-  {% else %}
-  <div class="flex flex-wrap gap-3 pb-4">
-    <a href="{% url 'core:receipt_pdf' invoice.pk %}"
-       target="_blank"
-       class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold shadow-lg shadow-brand-500/30 transition-all active:scale-95">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+  {% elif invoice.status == 'paid' %}
+  <div class="space-y-3 pb-4">
+    <a href="{% url 'core:receipt_detail' invoice.pk %}"
+       class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-heading font-bold shadow-xl shadow-brand-500/40 transition-all active:scale-[0.98]">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
       </svg>
       View Receipt
     </a>
     <a href="{% url 'core:receipt_pdf' invoice.pk %}?download=attachment"
-       class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
+       class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-700 border border-surface-600 text-white text-sm font-medium hover:bg-surface-600 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
       </svg>
-      Download Receipt
+      Download Receipt PDF
+    </a>
+  </div>
+
+  {% elif invoice.status == 'cancelled' %}
+  <div class="pb-4">
+    <div class="bg-surface-800 border border-surface-700 rounded-2xl p-4 text-center">
+      <p class="text-sm text-slate-400">This invoice has been cancelled.</p>
+      <a href="{% url 'core:invoice_list' %}" class="text-sm text-brand-400 hover:text-brand-300 font-medium mt-2 inline-block">← Back to Invoices</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Cancel option for non-terminal statuses -->
+  {% if invoice.status in 'draft,sent,overdue' %}
+  <div class="pb-4 -mt-1">
+    <a href="{% url 'core:invoice_cancel' invoice.pk %}"
+       class="block w-full text-center py-2 text-xs text-slate-500 hover:text-red-400 transition-colors">
+      Cancel this invoice
     </a>
   </div>
   {% endif %}

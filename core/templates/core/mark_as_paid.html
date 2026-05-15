@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block page_title %}Record Payment{% endblock %}
+{% block mobile_page_title %}Record Payment{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pay-field input,
+  .pay-field select {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .pay-field input:focus, .pay-field select:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+  }
+  .pay-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 7px;
+  }
+  select option { background: #1e293b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-5">
+
+  <!-- Back + Title -->
+  <div class="flex items-center gap-3">
+    <a href="{% url 'core:invoice_detail' invoice.pk %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+      <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div>
+      <h1 class="text-xl font-heading font-bold text-white">Record Payment</h1>
+      <p class="text-xs text-slate-400 mt-0.5">{{ invoice.invoice_number }} · {{ invoice.client }}</p>
+    </div>
+  </div>
+
+  <!-- Invoice Summary Card -->
+  <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Amount Due</p>
+        <p class="text-3xl font-heading font-extrabold text-white mt-1">
+          ₦{{ invoice.total_amount|floatformat:2 }}
+        </p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-slate-400">Due Date</p>
+        <p class="text-sm font-semibold {% if invoice.is_overdue %}text-red-400{% else %}text-white{% endif %} mt-1">
+          {{ invoice.due_date }}
+        </p>
+        {% if invoice.is_overdue %}
+        <span class="text-xs text-red-400 font-semibold">OVERDUE</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Form -->
+  <form method="post">
+    {% csrf_token %}
+    <div class="bg-surface-800 rounded-2xl border border-surface-700 p-5 space-y-5">
+      <h2 class="text-sm font-heading font-semibold text-white border-b border-surface-700 pb-3">
+        Payment Details
+      </h2>
+
+      <div class="pay-field">
+        <label>Amount Received (₦)</label>
+        {% render_field form.amount_received %}
+        {% if form.amount_received.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.amount_received.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="pay-field">
+        <label>Payment Method</label>
+        {% render_field form.payment_method %}
+        {% if form.payment_method.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.payment_method.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="pay-field">
+        <label>Payment Date &amp; Time</label>
+        {% render_field form.paid_at %}
+        {% if form.paid_at.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.paid_at.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <div class="pay-field">
+        <label>Reference / Transaction ID <span class="text-slate-500 normal-case font-normal">(optional)</span></label>
+        {% render_field form.payment_reference %}
+        {% if form.payment_reference.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.payment_reference.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-5 space-y-3">
+      <button type="submit"
+              class="w-full py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white text-base font-heading font-bold shadow-xl shadow-brand-500/40 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+        </svg>
+        Confirm Payment
+      </button>
+      <a href="{% url 'core:invoice_detail' invoice.pk %}"
+         class="block w-full py-3.5 rounded-2xl bg-surface-700 hover:bg-surface-600 text-slate-300 text-sm font-semibold text-center transition-colors">
+        Cancel
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

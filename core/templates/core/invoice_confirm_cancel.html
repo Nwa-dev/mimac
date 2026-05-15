@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block page_title %}Cancel Invoice{% endblock %}
+{% block mobile_page_title %}Cancel Invoice{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto space-y-5">
+
+  <div class="flex items-center gap-3">
+    <a href="{% url 'core:invoice_detail' invoice.pk %}"
+       class="p-2 rounded-xl bg-surface-800 border border-surface-700 hover:bg-surface-700 transition-colors">
+      <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-xl font-heading font-bold text-white">Cancel Invoice</h1>
+  </div>
+
+  <div class="bg-surface-800 rounded-2xl border border-red-900/50 p-6 space-y-4">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-900/50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-white">
+          Cancel {{ invoice.invoice_number }}?
+        </p>
+        <p class="text-sm text-slate-400 mt-1">
+          This will mark the invoice for <strong class="text-white">{{ invoice.client }}</strong>
+          as cancelled. This action cannot be undone.
+        </p>
+      </div>
+    </div>
+
+    <form method="post" class="space-y-3">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors">
+        Yes, Cancel Invoice
+      </button>
+      <a href="{% url 'core:invoice_detail' invoice.pk %}"
+         class="block w-full py-3 rounded-xl bg-surface-700 hover:bg-surface-600 text-slate-300 font-semibold text-sm text-center transition-colors">
+        Keep Invoice
+      </a>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

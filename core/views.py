@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from decimal import Decimal
 from .models import Invoice, Client, BusinessProfile
-from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm
+from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm, MarkAsPaidForm
 from .utils.pdf import generate_pdf
 import datetime
 
@@ -169,6 +169,76 @@ def invoice_delete(request, pk):
         return redirect('core:invoice_list')
 
     return render(request, 'core/invoice_confirm_delete.html', {'invoice': invoice})
+
+
+def mark_as_paid(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if invoice.status == 'paid':
+        messages.info(request, f"Invoice {invoice.invoice_number} is already marked as paid.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if invoice.status == 'cancelled':
+        messages.error(request, "A cancelled invoice cannot be marked as paid.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if request.method == 'POST':
+        form = MarkAsPaidForm(request.POST, invoice_total=invoice.total_amount)
+        if form.is_valid():
+            invoice.mark_as_paid(
+                payment_method=form.cleaned_data['payment_method'],
+                amount_received=form.cleaned_data['amount_received'],
+                payment_reference=form.cleaned_data.get('payment_reference', ''),
+            )
+            paid_at = form.cleaned_data.get('paid_at')
+            if paid_at:
+                Invoice.objects.filter(pk=invoice.pk).update(paid_at=paid_at)
+            messages.success(
+                request,
+                f"Payment recorded for {invoice.invoice_number}. Receipt is ready."
+            )
+            return redirect('core:receipt_detail', pk=invoice.pk)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = MarkAsPaidForm(invoice_total=invoice.total_amount)
+
+    return render(request, 'core/mark_as_paid.html', {'invoice': invoice, 'form': form})
+
+
+def receipt_detail(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('client').prefetch_related('items'),
+        pk=pk,
+        status='paid'
+    )
+    business = BusinessProfile.get_profile()
+    return render(request, 'core/receipt_detail.html', {'invoice': invoice, 'business': business})
+
+
+def invoice_cancel(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if invoice.status == 'paid':
+        messages.error(request, "A paid invoice cannot be cancelled.")
+        return redirect('core:invoice_detail', pk=pk)
+
+    if request.method == 'POST':
+        invoice.status = 'cancelled'
+        invoice.save(update_fields=['status'])
+        messages.success(request, f"Invoice {invoice.invoice_number} has been cancelled.")
+        return redirect('core:invoice_list')
+
+    return render(request, 'core/invoice_confirm_cancel.html', {'invoice': invoice})
+
+
+def mark_as_sent(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk, status='draft')
+    if request.method == 'POST':
+        invoice.status = 'sent'
+        invoice.save(update_fields=['status'])
+        messages.success(request, f"{invoice.invoice_number} marked as sent.")
+    return redirect('core:invoice_detail', pk=pk)
 
 
 def invoice_pdf(request, pk):
