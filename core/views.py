@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
+from django.http import HttpResponse
 from django.utils import timezone
 from decimal import Decimal
 from .models import Invoice, Client, BusinessProfile
 from .forms import InvoiceForm, InvoiceItemFormSet, ClientForm
+from .utils.pdf import generate_pdf
 import datetime
 
 
@@ -167,6 +169,51 @@ def invoice_delete(request, pk):
         return redirect('core:invoice_list')
 
     return render(request, 'core/invoice_confirm_delete.html', {'invoice': invoice})
+
+
+def invoice_pdf(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('client').prefetch_related('items'),
+        pk=pk
+    )
+    business = BusinessProfile.get_profile()
+
+    context = {
+        'invoice':       invoice,
+        'business':      business,
+        'document_type': 'INVOICE',
+    }
+
+    pdf_bytes = generate_pdf('core/pdf/invoice.html', context)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    disposition = request.GET.get('download', 'inline')
+    filename = f"{invoice.invoice_number}.pdf"
+    response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
+    return response
+
+
+def receipt_pdf(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('client').prefetch_related('items'),
+        pk=pk,
+        status='paid'
+    )
+    business = BusinessProfile.get_profile()
+
+    context = {
+        'invoice':       invoice,
+        'business':      business,
+        'document_type': 'RECEIPT',
+    }
+
+    pdf_bytes = generate_pdf('core/pdf/invoice.html', context)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    disposition = request.GET.get('download', 'inline')
+    filename = f"{invoice.receipt_number}.pdf"
+    response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
+    return response
 
 
 def client_list(request):
