@@ -87,7 +87,7 @@ def invoice_list(request):
 def invoice_create(request):
     if request.method == 'POST':
         form    = InvoiceForm(request.POST)
-        formset = InvoiceItemFormSet(request.POST)
+        formset = InvoiceItemFormSet(request.POST, prefix='items')
 
         if form.is_valid() and formset.is_valid():
             invoice = form.save()
@@ -103,7 +103,7 @@ def invoice_create(request):
             'issue_date': timezone.now().date(),
             'due_date':   timezone.now().date() + datetime.timedelta(days=14),
         })
-        formset = InvoiceItemFormSet()
+        formset = InvoiceItemFormSet(prefix='items')
 
     context = {
         'form':    form,
@@ -130,7 +130,7 @@ def invoice_edit(request, pk):
 
     if request.method == 'POST':
         form    = InvoiceForm(request.POST, instance=invoice)
-        formset = InvoiceItemFormSet(request.POST, instance=invoice)
+        formset = InvoiceItemFormSet(request.POST, instance=invoice, prefix='items')
 
         if form.is_valid() and formset.is_valid():
             form.save()
@@ -142,7 +142,7 @@ def invoice_edit(request, pk):
             messages.error(request, "Please correct the errors below.")
     else:
         form    = InvoiceForm(instance=invoice)
-        formset = InvoiceItemFormSet(instance=invoice)
+        formset = InvoiceItemFormSet(instance=invoice, prefix='items')
 
     context = {
         'form':    form,
