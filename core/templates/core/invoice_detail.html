@@ -13,8 +13,16 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
     </a>
-    <div class="flex-1 min-w-0">
+    <div class="flex-1 min-w-0 flex items-center gap-2">
       <h1 class="text-xl font-heading font-bold text-white truncate">{{ invoice.invoice_number }}</h1>
+      <button onclick="showCopied(this)" data-copy="{{ invoice.invoice_number }}"
+              class="flex-shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-surface-700 transition-colors"
+              title="Copy invoice number">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </button>
     </div>
     <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold {{ invoice.status_color }}">
       {{ invoice.get_status_display }}
@@ -167,13 +175,13 @@
         </svg>
         Edit
       </a>
-      <a href="{% url 'core:invoice_delete' invoice.pk %}"
-         class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 bg-red-900/20 border border-red-800/30 hover:bg-red-900/40 transition-colors active:scale-95">
+      <button onclick="openDeleteModal()"
+              class="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 bg-red-900/20 border border-red-800/30 hover:bg-red-900/40 transition-colors active:scale-95">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
-      </a>
+      </button>
     </div>
     {% if invoice.client.email %}
     <form method="post" action="{% url 'core:send_invoice' invoice.pk %}">
@@ -305,5 +313,61 @@
   </div>
   {% endif %}
 
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-surface-800 border border-surface-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-red-900/30 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-heading font-bold text-white">Delete Invoice</h3>
+          <p class="text-xs text-slate-400 mt-0.5">{{ invoice.invoice_number }}</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-300 mb-6">This will permanently delete the invoice and all its line items. This action cannot be undone.</p>
+      <div class="flex gap-3">
+        <button onclick="closeDeleteModal()"
+                class="flex-1 py-2.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-white text-sm font-medium transition-colors">
+          Cancel
+        </button>
+        <form method="post" action="{% url 'core:invoice_delete' invoice.pk %}" class="flex-1">
+          {% csrf_token %}
+          <button type="submit"
+                  class="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">
+            Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function showCopied(btn) {
+    var text = btn.dataset.copy;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    var svg = btn.querySelector('svg');
+    svg.style.color = '#10b981';
+    setTimeout(function() { svg.style.color = ''; }, 1500);
+  }
+  function openDeleteModal() {
+    document.getElementById('delete-modal').classList.remove('hidden');
+  }
+  function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+  }
+  document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+</script>
 {% endblock %}

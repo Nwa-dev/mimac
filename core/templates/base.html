@@ -1,9 +1,11 @@
+{% load core_tags %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block page_title %}InvoiceApp{% endblock %} — Invoice System</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z'/></svg>"/>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -61,6 +63,39 @@
     /* Bottom nav active indicator */
     .nav-item.active svg { color: #10b981; }
     .nav-item.active span { color: #10b981; }
+    .nav-item.active { background-color: #334155; color: white; }
+
+    /* Hide scrollbar */
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+    /* Safe area for mobile bottom nav */
+    .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+    /* Bounce-in animation (receipt success icon) */
+    @keyframes bounce-in {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-bounce-in { animation: bounce-in 0.5s ease-out; }
+
+    /* Pulse ring (receipt success icon) */
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+
+    /* Button loading spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      margin-right: 6px; vertical-align: middle;
+    }
   </style>
 
   {% block extra_head %}{% endblock %}
@@ -82,6 +117,8 @@
     </div>
 
     <!-- Navigation Links -->
+    {% active_if 'invoice_list' 'invoice_detail' 'invoice_create' 'invoice_edit' 'invoice_delete' 'invoice_cancel' 'invoice_pdf' 'mark_as_sent' 'mark_as_paid' 'receipt_detail' 'receipt_pdf' 'send_invoice' 'send_receipt' as sidebar_inv_active %}
+    {% active_if 'client_list' 'client_detail' 'client_create' 'client_edit' as sidebar_cli_active %}
     <nav class="flex-1 px-4 py-6 space-y-1">
       <a href="{% url 'core:dashboard' %}"
          class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}active bg-surface-700 text-white{% endif %}">
@@ -93,7 +130,7 @@
       </a>
 
       <a href="{% url 'core:invoice_list' %}"
-         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if 'invoice' in request.resolver_match.url_name %}active bg-surface-700 text-white{% endif %}">
+         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if sidebar_inv_active %}active bg-surface-700 text-white{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
@@ -102,7 +139,7 @@
       </a>
 
       <a href="{% url 'core:client_list' %}"
-         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if 'client' in request.resolver_match.url_name %}active bg-surface-700 text-white{% endif %}">
+         class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-surface-700 hover:text-white transition-all duration-200 {% if sidebar_cli_active %}active bg-surface-700 text-white{% endif %}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
@@ -159,7 +196,7 @@
                   {% if message.tags == 'bg-green-100 text-green-800' %}bg-brand-500/90{% elif message.tags == 'bg-red-100 text-red-800' %}bg-red-500/90{% else %}bg-surface-700/90{% endif %}
                   animate-slide-in">
         <div class="flex-1 text-sm font-medium text-white">{{ message }}</div>
-        <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white mt-0.5">
+        <button data-dismiss-toast class="text-white/70 hover:text-white mt-0.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -177,7 +214,7 @@
   </div>
 
   <!-- ─── MOBILE BOTTOM NAVIGATION ──────────────────────────────────── -->
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-800 border-t border-surface-700 px-2 py-2 safe-area-inset-bottom">
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-800 border-t border-surface-700 px-2 py-2 safe-area-bottom">
     <div class="flex items-center justify-around">
 
       <a href="{% url 'core:dashboard' %}"
@@ -190,7 +227,7 @@
       </a>
 
       <a href="{% url 'core:invoice_list' %}"
-         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
+         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% active_if 'invoice_list' 'invoice_detail' 'invoice_create' 'invoice_edit' 'invoice_delete' 'invoice_cancel' 'invoice_pdf' 'mark_as_sent' 'mark_as_paid' 'receipt_detail' 'receipt_pdf' 'send_invoice' 'send_receipt' %}">
         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
@@ -210,7 +247,7 @@
       </a>
 
       <a href="{% url 'core:client_list' %}"
-         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% if 'client' in request.resolver_match.url_name %}active{% endif %}">
+         class="nav-item flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 {% active_if 'client_list' 'client_detail' 'client_create' 'client_edit' %}">
         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
@@ -230,6 +267,33 @@
 
     </div>
   </nav>
+
+  <script>
+    // Auto-dismiss toasts after 5 seconds
+    document.querySelectorAll('.toast-notification').forEach(function(toast) {
+      setTimeout(function() {
+        toast.style.transition = 'opacity 0.4s';
+        toast.style.opacity = '0';
+        setTimeout(function() { toast.remove(); }, 400);
+      }, 5000);
+    });
+    // Dismiss on close button click
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-dismiss-toast]');
+      if (btn) {
+        var toast = btn.closest('.toast-notification');
+        if (toast) toast.remove();
+      }
+    });
+    // Button loading state on form submit
+    document.addEventListener('submit', function(e) {
+      var btn = e.target.querySelector('button[type="submit"]:not([data-no-loading])');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-spinner"></span>Processing…';
+      }
+    });
+  </script>
 
   {% block extra_scripts %}{% endblock %}
 

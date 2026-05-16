@@ -39,13 +39,22 @@ def dashboard(request):
 
     recent_invoices = Invoice.objects.select_related('client').order_by('-created_at')[:10]
 
+    now = timezone.now()
+    this_month_paid = Invoice.objects.filter(
+        status='paid',
+        paid_at__year=now.year,
+        paid_at__month=now.month,
+    ).aggregate(t=Sum('total_amount'))['t'] or Decimal('0')
+
     context = {
-        'total_invoiced':    total_invoiced,
-        'total_paid':        total_paid,
-        'total_outstanding': total_outstanding,
-        'invoice_counts':    invoice_counts,
-        'recent_invoices':   recent_invoices,
-        'client_count':      Client.objects.count(),
+        'total_invoiced':      total_invoiced,
+        'total_paid':          total_paid,
+        'total_outstanding':   total_outstanding,
+        'invoice_counts':      invoice_counts,
+        'recent_invoices':     recent_invoices,
+        'client_count':        Client.objects.count(),
+        'this_month_paid':     this_month_paid,
+        'current_month_name':  now.strftime('%B'),
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -374,8 +383,11 @@ def receipt_pdf(request, pk):
 
 
 def client_list(request):
-    query   = request.GET.get('q', '')
-    clients = Client.objects.order_by('name')
+    query = request.GET.get('q', '')
+    clients = Client.objects.annotate(
+        invoice_count=Count('invoices'),
+        total_invoiced_amt=Sum('invoices__total_amount'),
+    ).order_by('name')
     if query:
         clients = clients.filter(
             Q(name__icontains=query) |
@@ -424,3 +436,11 @@ def client_edit(request, pk):
     return render(request, 'core/client_form.html', {
         'form': form, 'client': client, 'title': f'Edit {client}'
     })
+
+
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
+
+
+def custom_500(request):
+    return render(request, '500.html', status=500)
