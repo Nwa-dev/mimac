@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["cairo", "pango", "gdk-pixbuf", "fontconfig", "freetype", "harfbuzz", "zlib"]
+
+[phases.build]
+cmds = ["pip install -r requirements.txt", "python manage.py collectstatic --noinput"]
